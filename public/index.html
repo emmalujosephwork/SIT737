@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIT737 Cloud Native App</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <h1>SIT737 Cloud Native Application</h1>
+      <p class="subtitle">Mini Capstone Project – Stage 1</p>
+
+      <div class="hero">
+        <h2>Hello from Kubernetes 🚀</h2>
+        <p>This application is containerised with Docker, deployed on GKE, and connected to MongoDB.</p>
+      </div>
+
+      <div class="grid">
+        <div>
+          <h3>Containerisation</h3>
+          <p>Application packaged using Docker.</p>
+        </div>
+        <div>
+          <h3>Kubernetes</h3>
+          <p>Deployment and Service manage the app.</p>
+        </div>
+        <div>
+          <h3>MongoDB</h3>
+          <p>Form data is stored in a cloud database.</p>
+        </div>
+      </div>
+
+      <section class="form-section">
+        <h2>Feedback Form</h2>
+
+        <form action="/submit" method="POST">
+          <input type="text" name="name" placeholder="Enter your name" required />
+          <input type="email" name="email" placeholder="Enter your email" required />
+          <textarea name="message" placeholder="Enter your message" required></textarea>
+          <button type="submit">Submit Feedback</button>
+        </form>
+      </section>
+
+      <section class="data-section">
+        <h2>Saved Feedback from MongoDB</h2>
+        <div id="feedbackList">Loading data...</div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    async function loadFeedbacks() {
+      const response = await fetch("/api/feedbacks");
+      const feedbacks = await response.json();
+
+      const list = document.getElementById("feedbackList");
+
+      if (feedbacks.length === 0) {
+        list.innerHTML = "<p>No feedback submitted yet.</p>";
+        return;
+      }
+
+      list.innerHTML = feedbacks.map(item => `
+        <div class="feedback-card">
+          <h4>${item.name}</h4>
+          <p><strong>Email:</strong> ${item.email}</p>
+          <p><strong>Message:</strong> ${item.message}</p>
+          <p class="date"><strong>Date:</strong> ${new Date(item.createdAt).toLocaleString()}</p>
+        </div>
+      `).join("");
+    }
+
+    loadFeedbacks();
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: CI/CD Pipeline
 
 on:
   push:
@@ -6,21 +6,56 @@ on:
       - main
 
 jobs:
-  docker-build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    # 1. Checkout code
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    # 2. Login to Docker Hub
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build Docker image
-        run: docker build -t emmalujoseph/cloud-app:v7 .
+    # 3. Build Docker image
+    - name: Build Docker Image
+      run: |
+        docker build -t emmalujoseph/cloud-app:latest .
 
-      - name: Push Docker image
-        run: docker push emmalujoseph/cloud-app:v7
+    # 4. Push Docker image
+    - name: Push Docker Image
+      run: |
+        docker push emmalujoseph/cloud-app:latest
+
+    # -------------------------
+    # 🚀 CD PART STARTS HERE
+    # -------------------------
+
+    # 5. Authenticate to GCP
+    - name: Authenticate to GCP
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    # 6. Setup gcloud
+    - name: Set up gcloud
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: sit737-26t1-joseph-d5983bb
+
+    # 7. Get GKE credentials
+    - name: Get GKE credentials
+      run: |
+        gcloud container clusters get-credentials cloud-cluster-1 \
+          --zone australia-southeast1-a \
+          --project sit737-26t1-joseph-d5983bb
+
+    # 8. Deploy to Kubernetes
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl set image deployment/cloud-app cloud-app=emmalujoseph/cloud-app:latest
+        kubectl rollout restart deployment/cloud-app
